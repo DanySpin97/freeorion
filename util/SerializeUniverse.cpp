@@ -20,6 +20,8 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/uuid/nil_generator.hpp>
 
+BOOST_CLASS_EXPORT(UniverseObject)
+BOOST_CLASS_VERSION(UniverseObject, 2)
 BOOST_CLASS_EXPORT(System)
 BOOST_CLASS_EXPORT(Field)
 BOOST_CLASS_EXPORT(Planet)
@@ -204,9 +206,18 @@ void UniverseObject::serialize(Archive& ar, const unsigned int version)
         & BOOST_SERIALIZATION_NVP(m_y)
         & BOOST_SERIALIZATION_NVP(m_owner_empire_id)
         & BOOST_SERIALIZATION_NVP(m_system_id)
-        & BOOST_SERIALIZATION_NVP(m_specials)
-        & BOOST_SERIALIZATION_NVP(m_meters)
-        & BOOST_SERIALIZATION_NVP(m_created_on_turn);
+        & BOOST_SERIALIZATION_NVP(m_specials);
+    if (version < 2) {
+        std::map<MeterType, Meter> meter_map;
+        ar  & boost::serialization::make_nvp("m_meters", meter_map);
+        m_meters.reserve(meter_map.size());
+        m_meters.insert(meter_map.begin(), meter_map.end());
+    } else {
+        auto meters{m_meters.extract_sequence()};
+        ar  & BOOST_SERIALIZATION_NVP(meters);
+        m_meters.adopt_sequence(std::move(meters));
+    }
+    ar  & BOOST_SERIALIZATION_NVP(m_created_on_turn);
 }
 
 template <class Archive>
