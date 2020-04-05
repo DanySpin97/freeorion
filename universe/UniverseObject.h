@@ -12,12 +12,14 @@
 #include <boost/signals2/signal.hpp>
 #include <boost/signals2/optional_last_value.hpp>
 #include <boost/container/flat_map.hpp>
+#include <boost/container/allocator.hpp>
 
 #include <set>
 #include <string>
 #include <vector>
 
 using boost::container::flat_map;
+using boost::container::allocator;
 
 class System;
 class SitRepEntry;
@@ -49,7 +51,10 @@ FO_COMMON_API extern const int TEMPORARY_OBJECT_ID;
   * that is being displayed has changed.*/
 class FO_COMMON_API UniverseObject : virtual public std::enable_shared_from_this<UniverseObject> {
 public:
-    typedef flat_map<MeterType, Meter, std::less<MeterType>, std::vector<std::pair<MeterType, Meter>>> MeterMap;
+    //typedef flat_map<MeterType, Meter, std::less<MeterType>, std::vector<std::pair<MeterType, Meter>>> MeterMap;
+    typedef flat_map<MeterType, Meter, std::less<MeterType>,
+                     std::vector<std::pair<MeterType, Meter>,
+                                 allocator<std::pair<MeterType, Meter>>>> MeterMap;
 
     /** \name Signal Types */ //@{
     typedef boost::signals2::signal<void (), blocking_combiner<boost::signals2::optional_last_value<void>>> StateChangedSignalType;
