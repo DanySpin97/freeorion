@@ -97,7 +97,7 @@ namespace {
         GetUniverse().UpdateMeterEstimates(objvec);
     }
 
-    //void (Universe::*UpdateMeterEstimatesVoidFunc)(void) =                                      &Universe::UpdateMeterEstimates;
+    //void (Universe::*UpdateMeterEstimatesVoidFunc)(void) = &Universe::UpdateMeterEstimates;
 
     double LinearDistance(const Universe& universe, int system1_id, int system2_id) {
         double retval = universe.GetPathfinder()->LinearDistance(system1_id, system2_id);
@@ -169,8 +169,11 @@ namespace {
     }
     std::function<std::map<int, double> (const Universe&, int, int)> SystemNeighborsMapFunc = &SystemNeighborsMapP;
 
-    const Meter*                    (UniverseObject::*ObjectGetMeter)(MeterType) const =                &UniverseObject::GetMeter;
-    const UniverseObject::MeterMap& (UniverseObject::*ObjectMeters)(void) const =                       &UniverseObject::Meters;
+    const Meter*            (UniverseObject::*ObjectGetMeter)(MeterType) const =                &UniverseObject::GetMeter;
+
+    std::map<MeterType, Meter> ObjectMetersP(const UniverseObject& object)
+    { return std::map<MeterType, Meter>{object.Meters().begin(), object.Meters().end()}; }
+    std::function<std::map<MeterType, Meter> (const UniverseObject&)> ObjectMetersFunc = &ObjectMetersP;
 
     std::vector<std::string> ObjectSpecials(const UniverseObject& object) {
         std::vector<std::string> retval;
@@ -286,10 +289,10 @@ namespace FreeOrionPython {
             .def(boost::python::vector_indexing_suite<std::vector<ShipSlotType>, true>())
         ;
         class_<std::map<MeterType, Meter>>("MeterTypeMeterMap")
-            .def(boost::python::map_indexing_suite<UniverseObject::MeterMap, true>())
+            .def(boost::python::map_indexing_suite<std::map<MeterType, Meter>, true>())
         ;
 
-        // typedef std::map<std::pair<MeterType, std::string>, Meter>          PartMeterMap;
+        // typedef std::map<std::pair<MeterType, std::string>, Meter> PartMeterMap;
         class_<std::pair<MeterType, std::string>>("MeterTypeStringPair")
             .add_property("meterType",  &std::pair<MeterType, std::string>::first)
             .add_property("string",     &std::pair<MeterType, std::string>::second)
@@ -468,7 +471,11 @@ namespace FreeOrionPython {
             .def("initialMeterValue",           &UniverseObject::InitialMeterValue)
             .add_property("tags",               make_function(&UniverseObject::Tags,        return_value_policy<return_by_value>()))
             .def("hasTag",                      &UniverseObject::HasTag)
-            .add_property("meters",             make_function(ObjectMeters,                 return_internal_reference<>()))
+            .add_property("meters",             make_function(
+                                                    ObjectMetersFunc,
+                                                    return_value_policy<return_by_value>(),
+                                                    boost::mpl::vector<std::map<MeterType, Meter>, const UniverseObject&>()
+                                                ))
             .def("getMeter",                    make_function(ObjectGetMeter,               return_internal_reference<>()))
             .def("dump",                        make_function(&ObjectDump,                  return_value_policy<return_by_value>()), "Returns string with debug information.")
         ;
