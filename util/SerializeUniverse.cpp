@@ -213,9 +213,12 @@ void UniverseObject::serialize(Archive& ar, const unsigned int version)
         m_meters.reserve(meter_map.size());
         m_meters.insert(meter_map.begin(), meter_map.end());
     } else {
-        auto meters{m_meters.extract_sequence()};
-        ar  & BOOST_SERIALIZATION_NVP(meters);
-        m_meters.adopt_sequence(std::move(meters));
+        ar  & BOOST_SERIALIZATION_NVP(m_meters);
+
+        // loading the internal vector, like so, was no faster than loading the map
+        //auto meters{m_meters.extract_sequence()};
+        //ar  & BOOST_SERIALIZATION_NVP(meters);
+        //m_meters.adopt_sequence(std::move(meters));
     }
     ar  & BOOST_SERIALIZATION_NVP(m_created_on_turn);
 }
@@ -446,3 +449,50 @@ void Deserialize(Archive& ia, std::map<int, std::shared_ptr<UniverseObject>>& ob
 { ia >> BOOST_SERIALIZATION_NVP(objects); }
 template void Deserialize<freeorion_bin_iarchive>(freeorion_bin_iarchive& ia, std::map<int, std::shared_ptr<UniverseObject>>& objects);
 template void Deserialize<freeorion_xml_iarchive>(freeorion_xml_iarchive& ia, std::map<int, std::shared_ptr<UniverseObject>>& objects);
+
+namespace boost {
+namespace serialization {
+    template<class Archive, class Key, class Value>
+    void save(Archive& ar, const flat_map<Key, Value>& m, const unsigned int)
+    { stl::save_collection<Archive, flat_map<Key, Value>>(ar, m); }
+
+    template<class Archive, class Key, class Value>
+    void load(Archive& ar, flat_map<Key, Value>& m, const unsigned int)
+    { load_map_collection(ar, m); }
+
+    template<class Archive, class Key, class Value>
+    void serialize(Archive& ar, flat_map<Key, Value>& m, const unsigned int file_version)
+    { split_free(ar, m, file_version); }
+
+
+    // Note: I tried loading the internal vector of a flat_map instead of
+    //       loading it as a map and constructing elements on the stack.
+    //       The result was similar or slightly slower than the stack loader.
+    //
+    //template<class Archive, class U, class Allocator>
+    //inline void save(Archive& ar, const container::vector<U, Allocator>& t,
+    //                 const unsigned int file_version)
+    //{ stl::save_collection(ar, t); }
+
+    //template<class Archive, class U, class Allocator>
+    //inline void load(Archive& ar, container::vector<U, Allocator>& t,
+    //                 const unsigned int file_version)
+    //{
+    //    item_version_type item_version(0);
+    //    collection_size_type count;
+    //    ar >> BOOST_SERIALIZATION_NVP(count);
+    //    ar >> BOOST_SERIALIZATION_NVP(item_version);
+    //    t.resize(count);
+
+    //    using Container = container::vector<U, Allocator>;
+    //    typedef typename Container::value_type type;
+
+    //    for (auto& s : t)
+    //        ar >> make_nvp("item", s);
+    //}
+
+    //template<class Archive, class U, class Allocator>
+    //inline void serialize(Archive& ar, container::vector<U, Allocator>& t,
+    //                      const unsigned int file_version)
+    //{ split_free(ar, t, file_version); }
+}}

@@ -52,9 +52,7 @@ FO_COMMON_API extern const int TEMPORARY_OBJECT_ID;
 class FO_COMMON_API UniverseObject : virtual public std::enable_shared_from_this<UniverseObject> {
 public:
     //typedef flat_map<MeterType, Meter, std::less<MeterType>, std::vector<std::pair<MeterType, Meter>>> MeterMap;
-    typedef flat_map<MeterType, Meter, std::less<MeterType>,
-                     std::vector<std::pair<MeterType, Meter>,
-                                 allocator<std::pair<MeterType, Meter>>>> MeterMap;
+    typedef flat_map<MeterType, Meter, std::less<MeterType>> MeterMap;
 
     /** \name Signal Types */ //@{
     typedef boost::signals2::signal<void (), blocking_combiner<boost::signals2::optional_last_value<void>>> StateChangedSignalType;
@@ -112,7 +110,7 @@ public:
 
     std::set<int>               VisibleContainedObjectIDs(int empire_id) const; ///< returns the subset of contained object IDs that is visible to empire with id \a empire_id
 
-    const MeterMap&             Meters() const { return m_meters; }     ///< returns this UniverseObject's meters
+    const MeterMap&             Meters() const { return m_meters; }             ///< returns this UniverseObject's meters
     const Meter*                GetMeter(MeterType type) const;                 ///< returns the requested Meter, or 0 if no such Meter of that type is found in this object
     float                       CurrentMeterValue(MeterType type) const;        ///< returns current value of the specified meter \a type
     float                       InitialMeterValue(MeterType type) const;        ///< returns this turn's initial value for the specified meter \a type
