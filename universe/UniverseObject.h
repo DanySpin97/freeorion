@@ -12,14 +12,12 @@
 #include <boost/signals2/signal.hpp>
 #include <boost/signals2/optional_last_value.hpp>
 #include <boost/container/flat_map.hpp>
-#include <boost/container/allocator.hpp>
 
 #include <set>
 #include <string>
 #include <vector>
 
 using boost::container::flat_map;
-using boost::container::allocator;
 
 class System;
 class SitRepEntry;
